@@ -383,18 +383,18 @@ def api_generate_video():
                         intro_fit_path = os.path.join(app.static_folder, f"intro_{name}_{timestamp}.png")
                         fitted = ImageOps.pad(scaled_img, (w, h), method=Image.Resampling.LANCZOS, color=(0, 0, 0))
                         fitted.save(intro_fit_path)
-                        final_video = ImageClip(intro_fit_path, duration=duration).with_audio(audio)
+                        final_video = ImageClip(intro_fit_path, duration=output_duration).with_audio(audio_for_output)
                     else:
                         # Taller than frame: smooth linear scroll from top to bottom across full audio duration
                         full_arr = np.array(scaled_img)
                         max_offset = scaled_h - h
 
                         def make_scroll_frame(t):
-                            progress = 0 if duration <= 0 else min(1.0, max(0.0, t / duration))
+                            progress = 0 if output_duration <= 0 else min(1.0, max(0.0, t / output_duration))
                             y_off = int(progress * max_offset)
                             return full_arr[y_off:y_off + h, 0:w]
 
-                        final_video = VideoClip(make_scroll_frame, duration=duration).with_audio(audio)
+                        final_video = VideoClip(make_scroll_frame, duration=output_duration).with_audio(audio_for_output)
                 except Exception as intro_err:
                     print(f"Intro image step failed for {filename}: {intro_err}")
                     final_video = text_video
