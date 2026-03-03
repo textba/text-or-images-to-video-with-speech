@@ -41,7 +41,7 @@
         <input type="text" id="title-input" placeholder="YouTube title (optional)" maxlength="100">
         <textarea id="description-input" placeholder="YouTube description (optional)"></textarea>
         <input type="file" id="intro-image-input" accept="image/*" multiple>
-        <small style="display:block; margin:-6px 0 10px; color:#666;">Upload up to 5 images. If you upload multiple, they will be combined into one long image.</small>
+        <small style="display:block; margin:-6px 0 10px; color:#666;">Upload up to 10 images. If you upload multiple, they are auto-sorted by filename number (1, 2, 3...) and combined into one long image.</small>
         <textarea id="text-input" placeholder="Paste up to 8000 words here."></textarea>
 
         <div class="format-options">
@@ -107,11 +107,24 @@
             });
         }
 
+        function extractOrderNumber(name) {
+            const m = (name || '').match(/(\d+)/);
+            return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER;
+        }
+
         async function buildIntroImageData(files) {
             if (!files || !files.length) return null;
-            if (files.length === 1) return await fileToDataUrl(files[0]);
 
-            const images = await Promise.all(Array.from(files).map(loadImageFromFile));
+            const orderedFiles = Array.from(files).sort((a, b) => {
+                const aNum = extractOrderNumber(a.name);
+                const bNum = extractOrderNumber(b.name);
+                if (aNum !== bNum) return aNum - bNum;
+                return (a.name || '').localeCompare(b.name || '');
+            });
+
+            if (orderedFiles.length === 1) return await fileToDataUrl(orderedFiles[0]);
+
+            const images = await Promise.all(orderedFiles.map(loadImageFromFile));
             const targetWidth = Math.max(...images.map(i => i.width));
 
             const resized = images.map(img => {
@@ -146,7 +159,7 @@
             const introImageFiles = introImageInput.files ? Array.from(introImageInput.files) : [];
             if (!text) return alert("No text to convert.");
             if (!formats.length) return alert("Select at least one video format.");
-            if (introImageFiles.length > 5) return alert("Please upload up to 5 images.");
+            if (introImageFiles.length > 10) return alert("Please upload up to 10 images.");
             
             status.textContent = `Creating ${formats.length} video format(s) with ${voiceName} voice...`;
             videoBtn.disabled = true;
