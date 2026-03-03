@@ -437,17 +437,6 @@ def api_upload_video():
     if not os.path.exists(file_path):
         return jsonify({"error": f"Video file not found: {file_path}"}), 404
 
-    is_portrait_short = filename.lower().startswith("portrait_tiktok_")
-    youtube_title_final = title
-    youtube_description_final = description
-    youtube_tags = ["text to video", "tts"]
-
-    if is_portrait_short:
-        if "#shorts" not in youtube_title_final.lower():
-            youtube_title_final = f"{youtube_title_final} #Shorts".strip()
-        if "#shorts" not in youtube_description_final.lower():
-            youtube_description_final = (youtube_description_final + "\n\n#Shorts").strip()
-        youtube_tags.append("shorts")
     results = {
         "debug": {
             "targets": targets,
@@ -492,9 +481,9 @@ def api_upload_video():
                 print(f"Starting YouTube upload for {filename}...")
                 youtube_url, _ = upload_video(
                     file_path=file_path,
-                    title=youtube_title_final,
-                    description=youtube_description_final,
-                    tags=youtube_tags,
+                    title=title,
+                    description=description,
+                    tags=["text to video", "tts"],
                     category_id=YOUTUBE_CATEGORY_ID,
                     privacy_status=YOUTUBE_PRIVACY_STATUS,
                     client_secrets_file=os.path.join(app.static_folder, YOUTUBE_CLIENT_SECRETS_FILE),
