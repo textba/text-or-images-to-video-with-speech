@@ -356,12 +356,32 @@ def api_generate_video():
             intro_fit_path = None
             if intro_image_path:
                 try:
-                    # If an image is uploaded, keep that image on-screen for the full video duration
+                    # If an image is uploaded, show it for full duration and slowly scroll top -> bottom when tall
                     src_img = Image.open(intro_image_path).convert('RGB')
-                    intro_fit_path = os.path.join(app.static_folder, f"intro_{name}_{timestamp}.png")
-                    fitted = ImageOps.fit(src_img, (w, h), method=Image.Resampling.LANCZOS)
-                    fitted.save(intro_fit_path)
-                    final_video = ImageClip(intro_fit_path, duration=duration).with_audio(audio)
+                    src_w, src_h = src_img.size
+
+                    scale = w / src_w
+                    scaled_w = w
+                    scaled_h = max(1, int(src_h * scale))
+                    scaled_img = src_img.resize((scaled_w, scaled_h), Image.Resampling.LANCZOS)
+
+                    if scaled_h <= h:
+                        # Fits in frame: letterbox/pad and keep static
+                        intro_fit_path = os.path.join(app.static_folder, f"intro_{name}_{timestamp}.png")
+                        fitted = ImageOps.pad(scaled_img, (w, h), method=Image.Resampling.LANCZOS, color=(0, 0, 0))
+                        fitted.save(intro_fit_path)
+                        final_video = ImageClip(intro_fit_path, duration=duration).with_audio(audio)
+                    else:
+                        # Taller than frame: smooth linear scroll from top to bottom across full audio duration
+                        full_arr = np.array(scaled_img)
+                        max_offset = scaled_h - h
+
+                        def make_scroll_frame(t):
+                            progress = 0 if duration <= 0 else min(1.0, max(0.0, t / duration))
+                            y_off = int(progress * max_offset)
+                            return full_arr[y_off:y_off + h, 0:w]
+
+                        final_video = VideoClip(make_scroll_frame, duration=duration).with_audio(audio)
                 except Exception as intro_err:
                     print(f"Intro image step failed for {filename}: {intro_err}")
                     final_video = text_video
