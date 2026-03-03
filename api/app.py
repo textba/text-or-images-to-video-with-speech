@@ -63,7 +63,7 @@ def generate_elevenlabs_audio(text, output_path, voice_id=DEFAULT_VOICE_ID):
         }
         response = requests.post(url, json=data, headers=headers)
         log_path = os.path.join(os.path.dirname(__file__), "elevenlabs_debug.log")
-        with open(log_path, "a") as f:
+        with open(log_path, "a", encoding="utf-8", errors="replace") as f:
             f.write(f"{time.ctime()}: ElevenLabs Response {response.status_code} - {response.text}\n")
         print(f"ElevenLabs API Response: {response.status_code}")
         if response.status_code == 200:
@@ -266,7 +266,7 @@ def generate_openai_audio(text, output_path):
             return True
         else:
             log_path = os.path.join(os.path.dirname(__file__), "openai_debug.log")
-            with open(log_path, "a") as f:
+            with open(log_path, "a", encoding="utf-8", errors="replace") as f:
                 f.write(f"{time.ctime()}: OpenAI Response {response.status_code} - {response.text}\n")
             return False
     except Exception as e:
