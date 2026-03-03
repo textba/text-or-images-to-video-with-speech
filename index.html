@@ -64,7 +64,7 @@
                 <option value="2k">2K</option>
                 <option value="4k">4K</option>
             </select>            <!-- Accent selector removed -->
-            <button id="video-btn">Create Multi-Format Videos</button>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;"><input type="checkbox" id="auto-upload-orientation" checked> Auto-upload portrait to Shorts + landscape to YouTube</label>`r`n            <button id="video-btn">Create Multi-Format Videos</button>
             <span id="status"></span>
         </div>
     </div>
@@ -82,6 +82,7 @@
         const voiceSelect = document.getElementById('voice-select');
         const resolutionSelect = document.getElementById('resolution-select');
         const videoBtn = document.getElementById('video-btn');
+        const autoUploadOrientation = document.getElementById('auto-upload-orientation');
         const formatCheckboxes = document.querySelectorAll('.format-checkbox');
         // Upload checkboxes removed — upload happens post-render
         const status = document.getElementById('status');
@@ -210,7 +211,7 @@
                             <video src="${v.url}" controls></video>
                             <p><a href="${v.url}" download>Download MP4</a></p>
                             <div class="upload-actions">
-                                <button class="upload-btn" onclick="uploadVideo('${v.filename}', 'youtube', this)">Upload to YouTube</button>
+                                <button class="upload-btn" data-filename="${v.filename}" data-target="youtube" onclick="uploadVideo('${v.filename}', 'youtube', this)">Upload to YouTube</button>
                                 <button class="upload-btn" onclick="uploadVideo('${v.filename}', 'drive', this)">Upload to Google Drive</button>
                             </div>
                             <div class="upload-status" id="upload-status-${v.filename}"></div>
@@ -229,7 +230,16 @@
                 videoBtn.disabled = false;
             }
         });
-        async function uploadVideo(filename, target, btn) {
+
+        async function autoUploadByOrientation(videos) {
+            const targets = (videos || []).filter(v => v.type === 'portrait_tiktok' || v.type === 'landscape_720p');
+            for (const v of targets) {
+                const btn = document.querySelector(`button[data-filename="${v.filename}"][data-target="youtube"]`);
+                if (btn) {
+                    await uploadVideo(v.filename, 'youtube', btn);
+                }
+            }
+        }        async function uploadVideo(filename, target, btn) {
             const title = titleInput.value.trim();
             const description = descriptionInput.value.trim();
             const statusEl = btn.closest('.video-item')?.querySelector('.upload-status');
