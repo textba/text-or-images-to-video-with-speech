@@ -305,8 +305,8 @@ def api_generate_video():
         "landscape_720p": (1920, 1080),
         "square_instagram": (1080, 1080)
     }
-    # Use 1080p when an image is provided, 720p for text-only
-    format_map = format_map_1080p if intro_image_data else format_map_720p
+    # Always render in 1080p
+    format_map = format_map_1080p
     requested_formats = data.get('formats', ['portrait_tiktok'])
     if not isinstance(requested_formats, list):
         requested_formats = ['portrait_tiktok']
